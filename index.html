@@ -10,11 +10,11 @@
     <!-- Chosen Palette: "Calm Determination" - A palette using warm neutrals (slate, stone) with a strong, focused teal accent for progress and interactive elements, designed to be professional, motivating, and easy on the eyes. -->
     <!-- Application Structure Plan: A single-page dashboard designed for motivation and action. The structure prioritizes the primary goal at the top: the financial target and a countdown timer to create urgency. This is followed by financial input fields and a calculated monthly income display. Below that are four interactive "pillar" cards representing the core action areas. This structure was chosen to transform a static document into a living tool, allowing users to input specific financial data and see calculated progress directly. It allows the user to see their main objective at a glance while also being able to drill down into the specific tasks required to achieve it. The interactivity (updating progress, checking off tasks) is designed to foster a sense of ownership and continuous engagement with the plan. -->
     <!-- Visualization & Content Choices:
-        - Report Info: $5,000/month passive income goal. Goal: Inform & Track. Viz/Method: A dynamic, horizontal bar chart from Chart.js. Interaction: The chart is automatically updated with the calculated monthly income from the Ivari UL inputs. Justification: A progress bar is a universally understood and highly motivational way to visualize progress towards a quantitative target.
+        - Report Info: Customizable passive income goal. Goal: Inform & Track. Viz/Method: A dynamic, horizontal bar chart from Chart.js. Interaction: The chart is automatically updated with the calculated monthly income from the Ivari UL inputs, scaled by the user-defined goal. Justification: A progress bar is a universally understood and highly motivational way to visualize progress towards a quantitative target.
         - Report Info: End-of-year deadline. Goal: Motivate & Create Urgency. Viz/Method: A real-time JavaScript countdown timer. Interaction: None (passive display). Justification: A live countdown is a powerful psychological tool to reinforce the time-bound nature of the goal.
-        - Report Info: The four pillars of the Actionable Plan. Goal: Organize & Track Tasks. Viz/Method: Interactive HTML cards styled with Tailwind CSS. Interaction: Cards are clickable to reveal a checklist of sub-tasks. Checking a task provides visual feedback (strikethrough) and updates a secondary "Task Completion" metric. Justification: This "chunking" of tasks into expandable cards makes the plan feel manageable and less overwhelming. The checklist functionality turns a passive list into an actionable to-do list, promoting a sense of accomplishment.
+        - Report Info: The four pillars of the Actionable Plan. Goal: Organize & Track Tasks. Viz/Method: Interactive HTML cards styled with Tailwind CSS. Interaction: Cards are clickable to reveal a checklist of sub-tasks. Checking a task provides visual feedback (strikethrough) and updates a secondary "Task Completion" metric. A new "Suggest More Sub-Tasks" button uses the Gemini API to dynamically add more tasks to the list. Justification: This "chunking" of tasks into expandable cards makes the plan feel manageable and less overwhelming. The checklist functionality turns a passive list into an actionable to-do list, promoting a sense of accomplishment. The LLM integration provides dynamic, AI-powered task breakdown and brainstorming, enhancing the actionable nature of the dashboard.
         - Report Info: Specific investment details (fund value, calculated monthly income, projected investment needed). Goal: Inform & Detail & Calculate. Viz/Method: Interactive input field for fund value, with a display for calculated monthly income. The update button triggers the calculation and chart update. Justification: Provides granular financial context directly relevant to the user's specific strategy, grounding the abstract goal in concrete figures and allowing for real-time calculation based on actual inputs.
-        - Library/Method: Chart.js for the progress bar, Vanilla JS for all logic and interactions. Tailwind CSS for all styling.
+        - Library/Method: Chart.js for the progress bar, Vanilla JS for all logic and interactions, and the Gemini API for LLM calls. Tailwind CSS for all styling.
     -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
@@ -39,6 +39,21 @@
             height: 40px;
             max-height: 40px;
         }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0d9488; /* Teal */
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-stone-50 text-slate-800">
@@ -47,7 +62,7 @@
 
         <header class="text-center mb-8 md:mb-12">
             <h1 class="text-3xl md:text-5xl font-extrabold text-slate-900 mb-2">My Vision: Financial Independence</h1>
-            <p class="text-lg md:text-xl text-slate-600">An interactive dashboard to track my progress towards <span class="font-bold text-teal-600">$5,000/month</span> in passive income.</p>
+            <p class="text-lg md:text-xl text-slate-600">An interactive dashboard to track my progress towards a <span id="subheadingGoalAmount" class="font-bold text-teal-600">$5,000/month</span> passive income goal.</p>
         </header>
 
         <main>
@@ -61,20 +76,24 @@
                         <p class="text-slate-700 mb-4">Calculated Monthly Income from Ivari UL: <span class="font-semibold text-teal-600">$<span id="calculatedMonthlyIncome">0.00</span></span></p>
 
                         <div class="mt-6 pt-6 border-t border-slate-200">
-                            <h3 class="text-lg font-bold text-slate-900 mb-3">Ivari UL Details & Calculation Inputs</h3>
-                            <p class="text-sm text-slate-500 mb-4">Update your investment details below to calculate your monthly income.</p>
+                            <h3 class="text-lg font-bold text-slate-900 mb-3">Goal & Ivari UL Details</h3>
+                            <p class="text-sm text-slate-500 mb-4">Set your monthly passive income goal and update your investment details.</p>
 
                             <div class="flex flex-col gap-4 mb-4">
                                 <div class="relative">
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
-                                    <input type="number" id="fundValueInput" placeholder="Current Fund Value" value="12000" class="w-full pl-7 pr-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition">
+                                    <input type="number" id="monthlyGoalInput" placeholder="My Monthly Goal" value="5000" class="w-full pl-7 pr-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition">
+                                </div>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                                    <input type="number" id="fundValueInput" placeholder="Current Fund Value" class="w-full pl-7 pr-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition">
                                 </div>
                                 <button id="calculateIncomeButton" class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 transition-colors duration-300">Calculate & Update Progress</button>
                             </div>
 
                             <p class="text-slate-700 mb-2">Ivari UL Average Annual Growth: <span class="font-semibold text-teal-600">20%</span> (<a href="https://rates.ivari.ca/" target="_blank" class="text-blue-600 hover:underline">Reference Rates</a>)</p>
-                            <p class="text-slate-700 mb-2">Projected Investment Needed (for $5k/month passive income @ 20% annual growth): <span class="font-semibold text-teal-600">$<span id="projectedInvestmentNeeded">300,000</span></span></p>
-                            <p class="text-sm text-slate-500 mt-2">*(Your calculation: $5,000/month = $60,000 annually, which is 20% of $300,000 total principal.)*</p>
+                            <p class="text-slate-700 mb-2">Projected Investment Needed (for <span id="displayMonthlyGoal">$5,000</span>/month passive income @ 20% annual growth): <span class="font-semibold text-teal-600">$<span id="projectedInvestmentNeeded">300,000</span></span></p>
+                            <p class="text-sm text-slate-500 mt-2">*(Calculation: Monthly Goal * 12 / 20% annual growth)*</p>
                         </div>
                     </div>
                     <div class="text-center bg-stone-100 rounded-xl p-6">
@@ -104,7 +123,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const GOAL_MONTHLY_INCOME = 5000;
             const IVARI_ANNUAL_GROWTH_RATE = 0.20; // 20%
             let progressChart;
 
@@ -159,9 +177,9 @@
                 const pillarsContainer = document.getElementById('pillars');
                 pillarsData.forEach(pillar => {
                     const card = document.createElement('div');
-                    card.className = 'pillar-card bg-white rounded-2xl shadow-lg p-6 cursor-pointer';
+                    card.className = 'pillar-card bg-white rounded-2xl shadow-lg p-6';
                     card.innerHTML = `
-                        <div class="flex flex-col items-center text-center">
+                        <div class="pillar-toggle-area flex flex-col items-center text-center cursor-pointer">
                             <div class="text-5xl mb-4">${pillar.icon}</div>
                             <h3 class="text-xl font-bold text-slate-900">${pillar.title}</h3>
                         </div>
@@ -176,6 +194,13 @@
                                     </li>
                                 `).join('')}
                             </ul>
+                            <div class="mt-6 text-center">
+                                <button class="suggest-tasks-btn bg-teal-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-teal-600 transition-colors duration-300">
+                                    ✨ Suggest More Sub-Tasks
+                                </button>
+                                <div class="loader hidden"></div>
+                                <p class="error-message text-red-500 text-sm mt-2 hidden"></p>
+                            </div>
                         </div>
                     `;
                     pillarsContainer.appendChild(card);
@@ -237,7 +262,7 @@
                         scales: {
                             x: {
                                 beginAtZero: true,
-                                max: GOAL_MONTHLY_INCOME,
+                                max: Math.max(1, parseFloat(document.getElementById('monthlyGoalInput').value) || 5000),
                                 display: false,
                             },
                             y: {
@@ -264,28 +289,111 @@
                         }
                     }
                 });
-                updateCalculatedIncome(); // Initial calculation on load
+                updateCalculatedIncome();
             }
 
             function updateCalculatedIncome() {
+                const monthlyGoalInput = document.getElementById('monthlyGoalInput');
                 const fundValueInput = document.getElementById('fundValueInput');
                 const calculatedMonthlyIncomeSpan = document.getElementById('calculatedMonthlyIncome');
+                const projectedInvestmentNeededSpan = document.getElementById('projectedInvestmentNeeded');
+                const displayMonthlyGoalSpan = document.getElementById('displayMonthlyGoal');
+                const subheadingGoalAmountSpan = document.getElementById('subheadingGoalAmount');
 
+                const currentMonthlyGoal = parseFloat(monthlyGoalInput.value) || 0;
                 const fundValue = parseFloat(fundValueInput.value) || 0;
+
+                // Update displayed goal
+                displayMonthlyGoalSpan.textContent = `$${currentMonthlyGoal.toLocaleString()}`;
+                subheadingGoalAmountSpan.textContent = `$${currentMonthlyGoal.toLocaleString()}/month`; // Updated here
+
 
                 // Calculate monthly income based on current fund value and annual growth rate
                 const annualIncome = fundValue * IVARI_ANNUAL_GROWTH_RATE;
                 let monthlyIncome = annualIncome / 12;
 
-                // Ensure monthly income doesn't exceed the goal for chart display
-                monthlyIncome = Math.max(0, Math.min(GOAL_MONTHLY_INCOME, monthlyIncome));
+                // Update chart max value and data
+                const chartMaxGoal = Math.max(1, currentMonthlyGoal);
+                progressChart.options.scales.x.max = chartMaxGoal;
+                progressChart.data.datasets[0].data[0] = Math.max(0, Math.min(chartMaxGoal, monthlyIncome));
+                progressChart.update();
 
                 calculatedMonthlyIncomeSpan.textContent = monthlyIncome.toFixed(2);
 
-                progressChart.data.datasets[0].data[0] = monthlyIncome;
-                progressChart.update();
+                // Calculate projected investment needed based on the *new* goal
+                const annualGoal = currentMonthlyGoal * 12;
+                const investmentNeeded = annualGoal / IVARI_ANNUAL_GROWTH_RATE;
+                projectedInvestmentNeededSpan.textContent = investmentNeeded.toLocaleString();
 
                 updateTaskProgress();
+            }
+
+            async function suggestMoreTasks(pillarTitle, taskListElement, suggestBtn, loader, errorMessage) {
+                loader.classList.remove('hidden');
+                suggestBtn.disabled = true;
+                errorMessage.classList.add('hidden');
+                errorMessage.textContent = '';
+
+                const prompt = `Suggest 3-5 highly actionable, specific, and measurable sub-tasks for the following goal category for a financial advisor: "${pillarTitle}". Focus on practical steps related to sales, client management, product knowledge, or team building within the financial advisory context. Present them as a bulleted list.`;
+
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = { contents: chatHistory };
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        const newTasks = text.split('\n').filter(line => line.trim().startsWith('* ') || line.trim().startsWith('- ')).map(line => line.replace(/^(\*|-)\s*/, '').trim());
+
+                        newTasks.forEach(task => {
+                            if (task) {
+                                const li = document.createElement('li');
+                                li.className = 'task-list-item flex items-center';
+                                const checkboxId = `${pillarTitle.replace(/\s+/g, '-')}-${Date.now()}-${Math.random().toString(36).substring(7)}`; // Unique ID
+                                li.innerHTML = `
+                                    <input type="checkbox" id="${checkboxId}" class="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                                    <label for="${checkboxId}" class="ml-3 block text-sm font-medium text-slate-700">
+                                        <span>${task}</span>
+                                    </label>
+                                `;
+                                taskListElement.appendChild(li);
+
+                                const newCheckbox = li.querySelector(`#${checkboxId}`);
+                                newCheckbox.addEventListener('change', updateTaskProgress);
+                                newCheckbox.addEventListener('click', (event) => {
+                                    event.stopPropagation();
+                                });
+                                const newLabel = li.querySelector(`label[for="${checkboxId}"]`);
+                                if (newLabel) {
+                                    newLabel.addEventListener('click', (event) => {
+                                        event.stopPropagation();
+                                    });
+                                }
+                            }
+                        });
+                        updateTaskProgress();
+                    } else {
+                        errorMessage.textContent = 'Failed to generate tasks. Please try again.';
+                        errorMessage.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    errorMessage.textContent = 'Error connecting to the AI service. Please try again later.';
+                    errorMessage.classList.remove('hidden');
+                } finally {
+                    loader.classList.add('hidden');
+                    suggestBtn.disabled = false;
+                }
             }
 
             function updateTaskProgress() {
@@ -302,24 +410,49 @@
                 const calculateIncomeButton = document.getElementById('calculateIncomeButton');
                 calculateIncomeButton.addEventListener('click', updateCalculatedIncome);
 
-                const pillarCards = document.querySelectorAll('.pillar-card');
-                pillarCards.forEach(card => {
-                    card.addEventListener('click', () => {
+                const monthlyGoalInput = document.getElementById('monthlyGoalInput');
+                monthlyGoalInput.addEventListener('change', updateCalculatedIncome);
+
+                const pillarToggleAreas = document.querySelectorAll('.pillar-toggle-area');
+                pillarToggleAreas.forEach(area => {
+                    area.addEventListener('click', () => {
+                        const card = area.closest('.pillar-card');
                         const taskList = card.querySelector('.task-list');
                         taskList.classList.toggle('hidden');
+                    });
+                });
+
+                document.querySelectorAll('.suggest-tasks-btn').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        const card = event.target.closest('.pillar-card');
+                        const pillarTitle = card.querySelector('h3').textContent;
+                        const taskListElement = card.querySelector('.task-list ul');
+                        const loader = card.querySelector('.loader');
+                        const errorMessage = card.querySelector('.error-message');
+                        suggestMoreTasks(pillarTitle, taskListElement, button, loader, errorMessage);
                     });
                 });
 
                 const checkboxes = document.querySelectorAll('.task-list-item input[type="checkbox"]');
                 checkboxes.forEach(checkbox => {
                     checkbox.addEventListener('change', updateTaskProgress);
+                    checkbox.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                    });
+                    const label = checkbox.nextElementSibling;
+                    if (label) {
+                        label.addEventListener('click', (event) => {
+                            event.stopPropagation();
+                        });
+                    }
                 });
             }
 
             function init() {
                 createPillars();
                 startCountdown();
-                createProgressChart(); // This also triggers initial calculation
+                createProgressChart();
                 addEventListeners();
             }
 
