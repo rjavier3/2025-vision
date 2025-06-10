@@ -12,7 +12,7 @@
     <!-- Visualization & Content Choices:
         - Report Info: Customizable passive income goal. Goal: Inform & Track. Viz/Method: A dynamic, horizontal bar chart from Chart.js. Interaction: The chart is automatically updated with the calculated monthly income from the Ivari UL inputs, scaled by the user-defined goal. Justification: A progress bar is a universally understood and highly motivational way to visualize progress towards a quantitative target.
         - Report Info: End-of-year deadline. Goal: Motivate & Create Urgency. Viz/Method: A real-time JavaScript countdown timer. Interaction: None (passive display). Justification: A live countdown is a powerful psychological tool to reinforce the time-bound nature of the goal.
-        - Report Info: The four pillars of the Actionable Plan. Goal: Organize & Track Tasks. Viz/Method: Interactive HTML cards styled with Tailwind CSS. Interaction: Cards are clickable to reveal a checklist of sub-tasks. Checking a task provides visual feedback (strikethrough) and updates a secondary "Task Completion" metric. Removed the "Suggest More Sub-Tasks" button. Justification: This "chunking" of tasks into expandable cards makes the plan feel manageable and less overwhelming. The checklist functionality turns a passive list into an actionable to-do list, promoting a sense of accomplishment.
+        - Report Info: The four pillars of the Actionable Plan. Goal: Organize & Track Tasks. Viz/Method: Interactive HTML cards styled with Tailwind CSS. Interaction: Cards are clickable to reveal a checklist of sub-tasks. Checking a task provides visual feedback (strikethrough) and updates a secondary "Task Completion" metric. Justification: This "chunking" of tasks into expandable cards makes the plan feel manageable and less overwhelming. The checklist functionality turns a passive list into an actionable to-do list, promoting a sense of accomplishment.
         - Report Info: Specific investment details (fund value, calculated monthly income, projected investment needed). Goal: Inform & Detail & Calculate. Viz/Method: Interactive input field for fund value, with a display for calculated monthly income. The update button triggers the calculation and chart update. Justification: Provides granular financial context directly relevant to the user's specific strategy, grounding the abstract goal in concrete figures and allowing for real-time calculation based on actual inputs.
         - Library/Method: Chart.js for the progress bar, Vanilla JS for all logic and interactions. Tailwind CSS for all styling.
     -->
@@ -38,21 +38,6 @@
             width: 100%;
             height: 40px;
             max-height: 40px;
-        }
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #0d9488; /* Teal */
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-            margin-left: 8px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -151,7 +136,7 @@
                 },
                 {
                     title: 'Building a High-Performing Team',
-                    icon: '�',
+                    icon: '👥',
                     tasks: [
                         'Develop strong leadership, mentoring, and communication skills.',
                         'Implement effective duplication strategies for team success.',
@@ -296,16 +281,12 @@
                 const currentMonthlyGoal = parseFloat(monthlyGoalInput.value) || 0;
                 const fundValue = parseFloat(fundValueInput.value) || 0;
 
-                // Update displayed goal
                 displayMonthlyGoalSpan.textContent = `$${currentMonthlyGoal.toLocaleString()}`;
                 subheadingGoalAmountSpan.textContent = `$${currentMonthlyGoal.toLocaleString()}/month`;
 
-
-                // Calculate monthly income based on current fund value and annual growth rate
                 const annualIncome = fundValue * IVARI_ANNUAL_GROWTH_RATE;
                 let monthlyIncome = annualIncome / 12;
 
-                // Update chart max value and data
                 const chartMaxGoal = Math.max(1, currentMonthlyGoal);
                 progressChart.options.scales.x.max = chartMaxGoal;
                 progressChart.data.datasets[0].data[0] = Math.max(0, Math.min(chartMaxGoal, monthlyIncome));
@@ -313,7 +294,6 @@
 
                 calculatedMonthlyIncomeSpan.textContent = monthlyIncome.toFixed(2);
 
-                // Calculate projected investment needed based on the *new* goal
                 const annualGoal = currentMonthlyGoal * 12;
                 const investmentNeeded = annualGoal / IVARI_ANNUAL_GROWTH_RATE;
                 projectedInvestmentNeededSpan.textContent = investmentNeeded.toLocaleString();
@@ -374,4 +354,3 @@
     </script>
 </body>
 </html>
-�
