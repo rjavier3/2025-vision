@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Vision & Action Plan Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: "Calm Determination" - A palette using warm neutrals (slate, stone) with a strong, focused teal accent for progress and interactive elements, designed to be professional, motivating, and easy on the eyes. -->
+    <!-- Application Structure Plan: A single-page dashboard designed for motivation and action. The structure prioritizes the primary goal at the top: the financial target and a countdown timer to create urgency. This is followed by four interactive "pillar" cards representing the core action areas. This structure was chosen to transform a static document into a living tool. It allows the user to see their main objective at a glance while also being able to drill down into the specific tasks required to achieve it. The interactivity (updating progress, checking off tasks) is designed to foster a sense of ownership and continuous engagement with the plan. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: $5,000/month passive income goal. Goal: Inform & Track. Viz/Method: A dynamic, horizontal bar chart from Chart.js. Interaction: User can input their current income, which updates the bar, providing immediate visual feedback on their primary KPI. Justification: A progress bar is a universally understood and highly motivational way to visualize progress towards a quantitative target.
+        - Report Info: End-of-year deadline. Goal: Motivate & Create Urgency. Viz/Method: A real-time JavaScript countdown timer. Interaction: None (passive display). Justification: A live countdown is a powerful psychological tool to reinforce the time-bound nature of the goal.
+        - Report Info: The four pillars of the Actionable Plan. Goal: Organize & Track Tasks. Viz/Method: Interactive HTML cards styled with Tailwind CSS. Interaction: Cards are clickable to reveal a checklist of sub-tasks. Checking a task provides visual feedback (strikethrough) and updates a secondary "Task Completion" metric. Justification: This "chunking" of tasks into expandable cards makes the plan feel manageable and less overwhelming. The checklist functionality turns a passive list into an actionable to-do list, promoting a sense of accomplishment.
+        - Library/Method: Chart.js for the progress bar, Vanilla JS for all logic and interactions. Tailwind CSS for all styling.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f7f4; /* Warm Stone */
+        }
+        .pillar-card {
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        .pillar-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .task-list-item input:checked + span {
+            text-decoration: line-through;
+            color: #4a5568;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 40px; 
+            max-height: 40px;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-6xl">
+
+        <header class="text-center mb-8 md:mb-12">
+            <h1 class="text-3xl md:text-5xl font-extrabold text-slate-900 mb-2">My Vision: Financial Independence</h1>
+            <p class="text-lg md:text-xl text-slate-600">An interactive dashboard to track my progress towards <span class="font-bold text-teal-600">$5,000/month</span> in passive income.</p>
+        </header>
+
+        <main>
+            <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-8 md:mb-12">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 mb-4">Master Progress Tracker</h2>
+                        <div class="chart-container mb-4">
+                            <canvas id="progressChart"></canvas>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <div class="relative flex-grow">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                                <input type="number" id="incomeInput" placeholder="Enter current income" class="w-full pl-7 pr-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition">
+                            </div>
+                            <button id="updateButton" class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 transition-colors duration-300">Update Progress</button>
+                        </div>
+                    </div>
+                    <div class="text-center bg-stone-100 rounded-xl p-6">
+                        <h2 class="text-xl font-bold text-slate-900 mb-3">Critical Deadline</h2>
+                        <p class="text-slate-600 mb-4">Time remaining this year to achieve my goal.</p>
+                        <div id="countdown" class="flex justify-center gap-4">
+                            <div><span id="days" class="text-4xl font-bold text-teal-600">--</span><p class="text-sm text-slate-500">Days</p></div>
+                            <div><span id="hours" class="text-4xl font-bold text-teal-600">--</span><p class="text-sm text-slate-500">Hours</p></div>
+                            <div><span id="minutes" class="text-4xl font-bold text-teal-600">--</span><p class="text-sm text-slate-500">Mins</p></div>
+                            <div><span id="seconds" class="text-4xl font-bold text-teal-600">--</span><p class="text-sm text-slate-500">Secs</p></div>
+                        </div>
+                    </div>
+                </div>
+                 <div class="mt-8 text-center">
+                    <h3 class="text-lg font-semibold text-slate-800">Overall Progress: <span id="taskProgressText" class="font-bold text-teal-600">0%</span></h3>
+                    <p class="text-sm text-slate-500">Based on task completion across all pillars.</p>
+                </div>
+            </div>
+
+            <div>
+                <h2 class="text-2xl md:text-3xl font-bold text-center text-slate-900 mb-8">My Actionable Plan: The Four Pillars</h2>
+                <div id="pillars" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const GOAL_INCOME = 5000;
+            let progressChart;
+
+            const pillarsData = [
+                {
+                    title: 'Mastering Product Expertise',
+                    icon: '🎓',
+                    tasks: [
+                        'Become an expert in Universal Life Insurance mechanics & benefits.',
+                        'Fully understand overfunding for cash value growth.',
+                        'Grasp all tax implications of overfunding and accumulation.',
+                        'Maximize engagement with all Greatway Financial training.',
+                        'Seek out and study reputable industry publications.'
+                    ]
+                },
+                {
+                    title: 'Elevating Sales & Business',
+                    icon: '📈',
+                    tasks: [
+                        'Intensely develop core sales proficiencies (prospecting, presenting, closing).',
+                        'Actively build and nurture a strong professional network.',
+                        'Prioritize exceptional client relationship management.',
+                        'Master objection handling with robust strategies.',
+                        'Create new business opportunities through referrals.'
+                    ]
+                },
+                {
+                    title: 'Building a High-Performing Team',
+                    icon: '👥',
+                    tasks: [
+                        'Develop strong leadership, mentoring, and communication skills.',
+                        'Implement effective duplication strategies for team success.',
+                        'Focus on attracting and retaining successful advisors.',
+                        'Empower team members to replicate best practices.',
+                        'Foster a culture of high performance and mutual support.'
+                    ]
+                },
+                {
+                    title: 'Strategic Financial & Business Planning',
+                    icon: '🗺️',
+                    tasks: [
+                        'Regularly connect with successful advisors and mentors.',
+                        'Develop and adhere to a comprehensive business plan.',
+                        'Set specific sales targets and recruitment goals.',
+                        'Maintain a clear timeline for execution.',
+                        'Consider consulting an independent financial planner.'
+                    ]
+                }
+            ];
+
+            function createPillars() {
+                const pillarsContainer = document.getElementById('pillars');
+                pillarsData.forEach(pillar => {
+                    const card = document.createElement('div');
+                    card.className = 'pillar-card bg-white rounded-2xl shadow-lg p-6 cursor-pointer';
+                    card.innerHTML = `
+                        <div class="flex flex-col items-center text-center">
+                            <div class="text-5xl mb-4">${pillar.icon}</div>
+                            <h3 class="text-xl font-bold text-slate-900">${pillar.title}</h3>
+                        </div>
+                        <div class="task-list mt-6 hidden">
+                            <ul class="space-y-3">
+                                ${pillar.tasks.map((task, index) => `
+                                    <li class="task-list-item flex items-center">
+                                        <input type="checkbox" id="${pillar.title.replace(/\s+/g, '-')}-${index}" class="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                                        <label for="${pillar.title.replace(/\s+/g, '-')}-${index}" class="ml-3 block text-sm font-medium text-slate-700">
+                                            <span>${task}</span>
+                                        </label>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    `;
+                    pillarsContainer.appendChild(card);
+                });
+            }
+
+            function startCountdown() {
+                const countdownElement = document.getElementById('countdown');
+                const daysEl = document.getElementById('days');
+                const hoursEl = document.getElementById('hours');
+                const minutesEl = document.getElementById('minutes');
+                const secondsEl = document.getElementById('seconds');
+                
+                const now = new Date();
+                const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+
+                const interval = setInterval(() => {
+                    const currentTime = new Date();
+                    const diff = endOfYear - currentTime;
+
+                    if (diff <= 0) {
+                        clearInterval(interval);
+                        countdownElement.innerHTML = '<p class="text-2xl font-bold text-red-500">Deadline Reached!</p>';
+                        return;
+                    }
+
+                    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+                    daysEl.textContent = d.toString().padStart(2, '0');
+                    hoursEl.textContent = h.toString().padStart(2, '0');
+                    minutesEl.textContent = m.toString().padStart(2, '0');
+                    secondsEl.textContent = s.toString().padStart(2, '0');
+                }, 1000);
+            }
+            
+            function createProgressChart() {
+                const ctx = document.getElementById('progressChart').getContext('2d');
+                progressChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Passive Income'],
+                        datasets: [{
+                            label: 'Current Income',
+                            data: [0],
+                            backgroundColor: ['#0d9488'], // Teal-600
+                            borderColor: ['#0f766e'], // Teal-700
+                            borderWidth: 1,
+                            borderRadius: 8,
+                            borderSkipped: false,
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                max: GOAL_INCOME,
+                                display: false,
+                            },
+                            y: {
+                                display: false,
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                enabled: false
+                            }
+                        }
+                    }
+                });
+            }
+            
+            function updateProgress() {
+                const incomeInput = document.getElementById('incomeInput');
+                let currentIncome = parseFloat(incomeInput.value) || 0;
+                currentIncome = Math.max(0, Math.min(GOAL_INCOME, currentIncome));
+
+                progressChart.data.datasets[0].data[0] = currentIncome;
+                progressChart.update();
+                
+                updateTaskProgress();
+            }
+
+            function updateTaskProgress() {
+                const checkboxes = document.querySelectorAll('.task-list-item input[type="checkbox"]');
+                const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+                const totalTasks = checkboxes.length;
+                const percentage = totalTasks > 0 ? Math.round((checkedCount / totalTasks) * 100) : 0;
+                
+                const taskProgressText = document.getElementById('taskProgressText');
+                taskProgressText.textContent = `${percentage}%`;
+            }
+
+            function addEventListeners() {
+                const updateButton = document.getElementById('updateButton');
+                updateButton.addEventListener('click', updateProgress);
+
+                const pillarCards = document.querySelectorAll('.pillar-card');
+                pillarCards.forEach(card => {
+                    card.addEventListener('click', () => {
+                        const taskList = card.querySelector('.task-list');
+                        taskList.classList.toggle('hidden');
+                    });
+                });
+                
+                const checkboxes = document.querySelectorAll('.task-list-item input[type="checkbox"]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', updateTaskProgress);
+                });
+            }
+
+            function init() {
+                createPillars();
+                startCountdown();
+                createProgressChart();
+                addEventListeners();
+                updateTaskProgress();
+            }
+
+            init();
+        });
+    </script>
+</body>
+</html>
