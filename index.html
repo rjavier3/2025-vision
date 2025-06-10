@@ -13,7 +13,7 @@
         - Report Info: $5,000/month passive income goal. Goal: Inform & Track. Viz/Method: A dynamic, horizontal bar chart from Chart.js. Interaction: The chart is automatically updated with the calculated monthly income from the Ivari UL inputs. Justification: A progress bar is a universally understood and highly motivational way to visualize progress towards a quantitative target.
         - Report Info: End-of-year deadline. Goal: Motivate & Create Urgency. Viz/Method: A real-time JavaScript countdown timer. Interaction: None (passive display). Justification: A live countdown is a powerful psychological tool to reinforce the time-bound nature of the goal.
         - Report Info: The four pillars of the Actionable Plan. Goal: Organize & Track Tasks. Viz/Method: Interactive HTML cards styled with Tailwind CSS. Interaction: Cards are clickable to reveal a checklist of sub-tasks. Checking a task provides visual feedback (strikethrough) and updates a secondary "Task Completion" metric. Justification: This "chunking" of tasks into expandable cards makes the plan feel manageable and less overwhelming. The checklist functionality turns a passive list into an actionable to-do list, promoting a sense of accomplishment.
-        - Report Info: Specific investment details (current overfunding, cash value gain, projected investment needed, amount invested, fund value, calculated monthly income). Goal: Inform & Detail & Calculate. Viz/Method: Interactive input field for fund value, with a display for calculated monthly income. The update button triggers the calculation and chart update. Justification: Provides granular financial context directly relevant to the user's specific strategy, grounding the abstract goal in concrete figures and allowing for real-time calculation based on actual inputs, simplified to use only the relevant fund value.
+        - Report Info: Specific investment details (fund value, calculated monthly income, projected investment needed). Goal: Inform & Detail & Calculate. Viz/Method: Interactive input field for fund value, with a display for calculated monthly income. The update button triggers the calculation and chart update. Justification: Provides granular financial context directly relevant to the user's specific strategy, grounding the abstract goal in concrete figures and allowing for real-time calculation based on actual inputs.
         - Library/Method: Chart.js for the progress bar, Vanilla JS for all logic and interactions. Tailwind CSS for all styling.
     -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
@@ -62,7 +62,7 @@
 
                         <div class="mt-6 pt-6 border-t border-slate-200">
                             <h3 class="text-lg font-bold text-slate-900 mb-3">Ivari UL Details & Calculation Inputs</h3>
-                            <p class="text-sm text-slate-500 mb-4">Enter your current Ivari Universal Life fund value to calculate your monthly income.</p>
+                            <p class="text-sm text-slate-500 mb-4">Update your investment details below to calculate your monthly income.</p>
 
                             <div class="flex flex-col gap-4 mb-4">
                                 <div class="relative">
@@ -72,7 +72,7 @@
                                 <button id="calculateIncomeButton" class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 transition-colors duration-300">Calculate & Update Progress</button>
                             </div>
 
-                            <p class="text-slate-700 mb-2">Ivari UL Average Annual Growth: <span class="font-semibold text-teal-600">20%</span></p>
+                            <p class="text-slate-700 mb-2">Ivari UL Average Annual Growth: <span class="font-semibold text-teal-600">20%</span> (<a href="https://rates.ivari.ca/" target="_blank" class="text-blue-600 hover:underline">Reference Rates</a>)</p>
                             <p class="text-slate-700 mb-2">Projected Investment Needed (for $5k/month passive income @ 20% annual growth): <span class="font-semibold text-teal-600">$<span id="projectedInvestmentNeeded">300,000</span></span></p>
                             <p class="text-sm text-slate-500 mt-2">*(Your calculation: $5,000/month = $60,000 annually, which is 20% of $300,000 total principal.)*</p>
                         </div>
@@ -323,4 +323,8 @@
                 addEventListeners();
             }
 
-            i
+            init();
+        });
+    </script>
+</body>
+</html>
